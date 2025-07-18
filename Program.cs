@@ -6,7 +6,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Configurar la cadena de conexión para la base de datos
 builder.Services.AddDbContext<ApiDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+builder.Services.AddHttpsRedirection(options =>
+{
+    options.HttpsPort = 5001; // Asegúrate de que el puerto sea correcto para tu configuración
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
