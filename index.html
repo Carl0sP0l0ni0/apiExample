@@ -1,0 +1,170 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API de Productos</title>
+</head>
+<body>
+    <h1>Gestión de Productos</h1>
+
+    <!-- Formulario para agregar o editar productos -->
+    <div>
+        <h2>Agregar Producto</h2>
+        <form id="product-form">
+            <label for="name">Nombre del Producto:</label>
+            <input type="text" id="name" required>
+            <br>
+            <label for="price">Precio:</label>
+            <input type="number" id="price" required>
+            <br>
+            <button type="submit">Agregar Producto</button>
+        </form>
+    </div>
+
+    <!-- Lista de productos -->
+    <div>
+        <h2>Lista de Productos</h2>
+        <ul id="product-list">
+            <!-- Los productos se agregarán aquí dinámicamente -->
+        </ul>
+    </div>
+
+    <script>
+        // Definir la URL base de la API
+        const API_URL = 'https://localhost:7067/api/product';
+
+        // Función para obtener los productos y mostrarlos
+        async function fetchProducts() {
+            try {
+                const response = await fetch(API_URL);
+                const products = await response.json();
+
+                // Limpiar la lista actual
+                const productList = document.getElementById('product-list');
+                productList.innerHTML = '';
+
+                // Agregar los productos a la lista
+                products.forEach(product => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `${product.name} - $${product.price}
+                        <button onclick="editProduct(${product.id})">Editar</button>
+                        <button onclick="deleteProduct(${product.id})">Eliminar</button>`;
+                    productList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error al obtener los productos:', error);
+            }
+        }
+
+        // Función para agregar un nuevo producto
+        async function addProduct(product) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(product),
+                });
+
+                if (response.ok) {
+                    // Actualizar la lista de productos
+                    fetchProducts();
+                } else {
+                    alert('Error al agregar el producto');
+                }
+            } catch (error) {
+                console.error('Error al agregar el producto:', error);
+            }
+        }
+
+        // Función para eliminar un producto
+        async function deleteProduct(id) {
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    // Actualizar la lista de productos
+                    fetchProducts();
+                } else {
+                    alert('Error al eliminar el producto');
+                }
+            } catch (error) {
+                console.error('Error al eliminar el producto:', error);
+            }
+        }
+
+        // Función para editar un producto (abre el formulario con datos preexistentes)
+        async function editProduct(id) {
+            try {
+                const response = await fetch(`${API_URL}/${id}`);
+                const product = await response.json();
+
+                document.getElementById('name').value = product.name;
+                document.getElementById('price').value = product.price;
+
+                // Cambiar el comportamiento del formulario a editar producto
+                document.getElementById('product-form').onsubmit = function (e) {
+                    e.preventDefault();
+                    updateProduct(id);
+                };
+            } catch (error) {
+                console.error('Error al obtener el producto:', error);
+            }
+        }
+
+        // Función para actualizar un producto
+        async function updateProduct(id) {
+            const product = {
+                name: document.getElementById('name').value,
+                price: document.getElementById('price').value,
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(product),
+                });
+
+                if (response.ok) {
+                    // Actualizar la lista de productos
+                    fetchProducts();
+                    // Limpiar el formulario
+                    document.getElementById('product-form').reset();
+                    document.getElementById('product-form').onsubmit = function (e) {
+                        e.preventDefault();
+                        const newProduct = {
+                            name: document.getElementById('name').value,
+                            price: document.getElementById('price').value,
+                        };
+                        addProduct(newProduct);
+                    };
+                } else {
+                    alert('Error al actualizar el producto');
+                }
+            } catch (error) {
+                console.error('Error al actualizar el producto:', error);
+            }
+        }
+
+        // Función que maneja el envío del formulario
+        document.getElementById('product-form').onsubmit = function (e) {
+            e.preventDefault();
+            const product = {
+                name: document.getElementById('name').value,
+                price: document.getElementById('price').value,
+            };
+            addProduct(product);
+        };
+
+        // Cargar los productos al iniciar la página
+        fetchProducts();
+    </script>
+</body>
+</html>
